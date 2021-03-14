@@ -103,6 +103,7 @@ int main()
     if (ferrorResult != SUCCESS)
     {
         perror("lab4.out incurred an error");
+        deleteList(lst);
         exit(FAILURE);
     }
     printf("list size: %d\n", lst->size);
