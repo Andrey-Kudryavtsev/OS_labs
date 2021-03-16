@@ -23,9 +23,17 @@ typedef struct List
 t_Node * initNode(char *line)
 {
     t_Node *node = (t_Node*) malloc(sizeof(t_Node));
-    if (node == NULL) return NULL;
+    if (node == NULL)
+    {
+        perror("lab4.out incurred an error");
+        return NULL;
+    }
     node->line = (char*) malloc((strlen(line) + 1) * sizeof(char));
-    if (node->line == NULL) return NULL;
+    if (node->line == NULL)
+    {
+        perror("lab4.out incurred an error");
+        return NULL;
+    }
     strcpy(node->line, line);
     node->next = NULL;
     return node;
@@ -41,7 +49,11 @@ void deleteNode(t_Node *node)
 t_List * initList()
 {
     t_List *lst = (t_List*) malloc(sizeof(t_List));
-    if (lst == NULL) return NULL;
+    if (lst == NULL)
+    {
+        perror("lab4.out incurred an error");
+        return NULL;
+    }
     lst->size = 0;
     lst->head = NULL;
     lst->tail = NULL;
@@ -84,7 +96,6 @@ int main()
     t_List *lst = initList();
     if (lst == NULL)
     {
-        perror("lab4.out incurred an error");
         exit(FAILURE);
     }
     char buf[LINE_MAX];
@@ -93,7 +104,6 @@ int main()
         int pushbackResult = pushback(lst, buf);
         if (pushbackResult == ERROR)
         {
-            perror("lab4.out incurred an error");
             deleteList(lst);
             exit(FAILURE);
         }
