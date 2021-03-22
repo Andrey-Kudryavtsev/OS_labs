@@ -106,7 +106,7 @@ int main()
             continue;
         }
         off_t lseekResult = lseek(filDes, table[lineIdx-1].offset, SEEK_SET);
-        if (lseekResult == -1)
+        if (lseekResult == ERROR)
         {
             perror("change position in the file");
             free(table);
