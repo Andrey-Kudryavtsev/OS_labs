@@ -14,7 +14,7 @@
 typedef struct t_LineInfo
 {
     off_t offset;
-    off_t lenght;
+    off_t length;
 } t_LineInfo;
 
 int makeTable(t_LineInfo **table, int filDes)
@@ -24,17 +24,17 @@ int makeTable(t_LineInfo **table, int filDes)
     (*table) = (t_LineInfo*) malloc(tableSize * sizeof(t_LineInfo));
     if ((*table) == NULL)
     {
-        perror("allocating memory for the table");
+        perror("lab5.out: allocating memory for the table");
         return ERROR;
     }
 
-    ssize_t readedBytes;
+    ssize_t bytes;
     int lineNum = 0;
-    off_t lenght = 0;
+    off_t length = 0;
     off_t offset = 0;
-    while ((readedBytes = read(filDes, buf, BUFSIZ)) > 0)
+    while ((bytes = read(filDes, buf, BUFSIZ)) > 0)
     {
-        for (ssize_t i = 0; i < readedBytes; ++i)
+        for (ssize_t i = 0; i < bytes; ++i)
         {
             if (lineNum >= tableSize)
             {
@@ -42,38 +42,101 @@ int makeTable(t_LineInfo **table, int filDes)
                 (*table) = realloc((*table), tableSize * sizeof(t_LineInfo));
                 if ((*table) == NULL)
                 {
-                    perror("reallocating memory for the table");
+                    perror("lab5.out: reallocating memory for the table");
                     return ERROR;
                 }
             }
             if (buf[i] == '\n')
             {
-                t_LineInfo lineInfo = {offset, lenght};
+                t_LineInfo lineInfo = {offset, length};
                 (*table)[lineNum] = lineInfo;
-                offset += (lenght + 1);
-                lenght = 0;
+                offset += (length + 1);
+                length = 0;
                 lineNum++;
             } else
             {
-                lenght++;
+                length++;
             }
         }
     }
 
-    if (readedBytes == ERROR)
+    if (bytes == ERROR)
     {
-        perror("reading from the file");
+        perror("lab5.out: reading from the file");
         return ERROR;
     }
     return lineNum;
 }
+
+int printLine(int filDes, int lineIdx, t_LineInfo *table)
+{
+    off_t lseekResult = lseek(filDes, table[lineIdx-1].offset, SEEK_SET);
+    if (lseekResult == ERROR)
+    {
+        perror("lab5.out: change position in the file while printing line");
+        return ERROR;
+    }
+
+    off_t lineLength = table[lineIdx-1].length;
+    char line[lineLength + 1]; // +1 for '\0'
+    ssize_t readResult = read(filDes, line, table[lineIdx-1].length);
+    if (readResult == ERROR)
+    {
+        perror("lab5.out: reading selected line");
+        return ERROR;
+    }
+    line[lineLength] = '\0';
+    printf("%s\n", line);
+    return SUCCESS;
+}
+
+int searchInFile(int filDes, t_LineInfo *table, int lineNum)
+{
+    int lineIdx = 1;
+
+    while (lineIdx != 0)
+    {
+// user input
+        int scanfResult = scanf("%d", &lineIdx);
+        if (scanfResult == EOF)
+        {
+            perror("lab5.out: reading the number");
+            return ERROR;
+        }
+        int fflushResult = fflush(stdin);
+        if (fflushResult == EOF)
+        {
+            perror("lab5.out: clearing stdin buffer");
+            return ERROR;
+        }
+// check input
+        if (lineIdx == 0)
+        {
+            printf("stop the application\n");
+            continue;
+        }
+        if (lineIdx < 0 || lineIdx > lineNum)
+        {
+            printf("enter the number in the interval [0, %d]\n", lineNum);
+            continue;
+        }
+// print requested line
+        int printLineResult = printLine(filDes, lineIdx, table);
+        if (printLineResult == ERROR)
+        {
+            return ERROR;
+        }
+    }
+    return SUCCESS;
+}
+
 int main()
 {
     t_LineInfo *table = NULL;
     int filDes = open("lab5.c", O_RDONLY);
     if (filDes == ERROR)
     {
-        perror("opening the file");
+        perror("lab5.out: opening the file");
         exit(FAILURE);
     }
 
@@ -82,55 +145,22 @@ int main()
     {
         free(table);
         close(filDes);
-        exit(FAILURE);;
+        exit(FAILURE);
     }
 
-    int lineIdx = 0;
-    while (1)
+    int searchInFileResult = searchInFile(filDes, table, lineNum);
+    if (searchInFileResult == ERROR)
     {
-        int scanfResult = scanf("%d", &lineIdx);
-        if (scanfResult == EOF)
-        {
-            perror("reading the number");
-            free(table);
-            close(filDes);
-            exit(FAILURE);
-        }
-        if (lineIdx == 0)
-        {
-            break;
-        }
-        if (lineIdx < 0 || lineIdx > lineNum)
-        {
-            printf("enter the number in the interval [0, %d]\n", lineNum);
-            continue;
-        }
-        off_t lseekResult = lseek(filDes, table[lineIdx-1].offset, SEEK_SET);
-        if (lseekResult == ERROR)
-        {
-            perror("change position in the file");
-            free(table);
-            close(filDes);
-            exit(FAILURE);
-        }
-        char buf[table[lineIdx-1].lenght + 1];
-        ssize_t readResult = read(filDes, buf, table[lineIdx-1].lenght);
-        if (readResult == ERROR)
-        {
-            perror("reading selected line");
-            free(table);
-            close(filDes);
-            exit(FAILURE);
-        }
-        buf[table[lineIdx-1].lenght] = '\0';
-        printf("%s\n", buf);
+        free(table);
+        close(filDes);
+        exit(FAILURE);
     }
 
     free(table);
     int closeResult = close(filDes);
     if (closeResult == ERROR)
     {
-        perror("closing the file");
+        perror("lab5.out: closing the file");
         exit(FAILURE);
     }
     exit(SUCCESS);
