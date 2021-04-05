@@ -9,6 +9,7 @@
 #include <poll.h>
 #include <sys/mman.h>
 
+#define STOP_APP 0
 #define SUCCESS 0
 #define FAILURE 1
 #define ERROR -1
@@ -78,7 +79,7 @@ int searchInFile(char *filMap, t_LineInfo *table, int lineNum)
     int lineIdx = 1;
     struct pollfd fd = {0, POLLIN, 0};
 
-    while (lineIdx != 0)
+    while (lineIdx != STOP_APP)
     {
 // wait until descriptor is ready
         int fdCount = poll(&fd, 1, TIMEOUT);
@@ -106,7 +107,7 @@ int searchInFile(char *filMap, t_LineInfo *table, int lineNum)
             return ERROR;
         }
 // check input
-        if (lineIdx == 0)
+        if (lineIdx == STOP_APP)
         {
             printf("stop the application\n");
             continue;
@@ -181,18 +182,14 @@ int main()
     lineNum = makeTable(&table, filMap, filSize);
     if (lineNum == ERROR)
     {
-        free(table);
-        close(filDes);
-        munmap(filMap, filSize);
+        freeResources(table, filDes, filMap, filSize);
         exit(FAILURE);
     }
 
     int searchInFileResult = searchInFile(filMap, table, lineNum);
     if (searchInFileResult == ERROR)
     {
-        free(table);
-        close(filDes);
-        munmap(filMap, filSize);
+        freeResources(table, filDes, filMap, filSize);
         exit(FAILURE);
     }
 
