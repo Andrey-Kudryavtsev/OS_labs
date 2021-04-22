@@ -8,6 +8,7 @@
 #define FAILURE 1
 #define SUCCESS 0
 #define CHILD_PROCESS 0
+#define NOT_TERMINATED_NORMALLY 0
 
 int main(int argc, char *argv[])
 {
@@ -38,7 +39,10 @@ int main(int argc, char *argv[])
             perror("lab10.out: waiting for child process");
             exit(FAILURE);
         }
-        printf("Child process has ended. Exit code: %d\n", WEXITSTATUS(status));
+        if (WIFEXITED(status) != NOT_TERMINATED_NORMALLY)
+        {
+            printf("Child process has ended. Exit code: %d\n", WEXITSTATUS(status));
+        }
     }
     exit(SUCCESS);
 }
