@@ -22,14 +22,14 @@ int isPatternCorrect(char *pattern)
         }
         if (pattern[i] == '/')
         {
-            fprintf(stderr, "lab19: '/' in pattern is not allowed\n");
+            fprintf(stderr, "lab19.out: '/' in pattern is not allowed\n");
             return ERROR;
         }
     }
 // check for length
     if (i == (PATH_MAX + 2 - 1))
     {
-        printf("Pattern is too long\n");
+        fprintf(stderr, "lab19.out: pattern is too long\n");
         return ERROR;
     }
 
@@ -47,7 +47,7 @@ int getPattern(char *pattern)
     }
     if (fgetsResult == NULL)
     {
-        printf("lab19.out: no pattern was given\n");
+        fprintf(stderr, "lab19.out: no pattern was given\n");
         return ERROR;
     }
     int isPatternCorrectResult = isPatternCorrect(pattern);

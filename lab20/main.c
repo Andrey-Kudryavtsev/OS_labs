@@ -24,7 +24,7 @@ int isPatternCorrect(char *pattern)
 // check for length
     if (i == (PATH_MAX + 2 - 1))
     {
-        printf("lab20.out: pattern is too long\n");
+        fprintf(stderr, "lab20.out: pattern is too long\n");
         return ERROR;
     }
 
@@ -42,7 +42,7 @@ int getPattern(char *pattern)
     }
     if (fgetsResult == NULL)
     {
-        printf("lab20.out: no pattern was given\n");
+        fprintf(stderr, "lab20.out: no pattern was given\n");
         return ERROR;
     }
     int isPatternCorrectResult = isPatternCorrect(pattern);
