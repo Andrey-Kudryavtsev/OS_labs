@@ -1,43 +1,87 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <limits.h>
 #include <glob.h>
+#include <string.h>
 
 #define ERROR -1
 #define SUCCESS 0
 #define FAILURE 1
 
-int printMatch(char *pattern)
+int isPatternCorrect(char *pattern)
 {
-    glob_t *pglob;
-    int globResult = glob(pattern, GLOB_NOCHECK | GLOB_MARK, NULL, pglob);
-    if (globResult != SUCCESS)
+// change '\n' with '\0' if needed
+    int i;
+    for (i = 0; pattern[i] != '\0'; ++i)
     {
-        perror("lab19.out: glob()");
-        globfree(pglob);
+        if (pattern[i] == '\n')
+        {
+            pattern[i] = '\0';
+            break;
+        }
+    }
+// check for length
+    if (i == (PATH_MAX + 2 - 1))
+    {
+        printf("lab20.out: pattern is too long\n");
         return ERROR;
     }
 
-    size_t matchAmount = pglob->gl_pathc;
+    return SUCCESS;
+}
+
+int getPattern(char *pattern)
+{
+    char *fgetsResult = fgets(pattern, PATH_MAX + 2, stdin);
+    int ferrorResult = ferror(stdin);
+    if (ferrorResult != SUCCESS)
+    {
+        perror("lab20.out: reading the pattern");
+        return ERROR;
+    }
+    if (fgetsResult == NULL)
+    {
+        printf("lab20.out: no pattern was given\n");
+        return ERROR;
+    }
+    int isPatternCorrectResult = isPatternCorrect(pattern);
+    if (isPatternCorrectResult != SUCCESS)
+    {
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+int printMatch(char *pattern)
+{
+    glob_t pglob;
+    int globResult = glob(pattern, GLOB_NOCHECK | GLOB_MARK, NULL, &pglob);
+    if (globResult != SUCCESS)
+    {
+        perror("lab20.out: glob()");
+        globfree(&pglob);
+        return ERROR;
+    }
+    size_t matchAmount = pglob.gl_pathc;
+    printf("matchAmount=%d\n", matchAmount);
     for (int i = 0; i < matchAmount; ++i)
     {
-        printf("%s\n", pglob->gl_pathv[i]);
+        printf("%s\n", pglob.gl_pathv[i]);
     }
-    globfree(pglob);
+    globfree(&pglob);
     return SUCCESS;
 }
 
 int main(int argc, char *argv[])
 {
-    char pattern[LINE_MAX];
-    printf("Enter the file pattern:\n");
-    int scanfResult = scanf("%s", pattern);
-    if (scanfResult == EOF)
+    char pattern[PATH_MAX + 2]; // +2 for '\0' and length check
+    int getPatternResult = getPattern(pattern);
+    if (getPatternResult == ERROR)
     {
-        perror("lab19.out: reading the pattern");
         exit(FAILURE);
     }
-
     int printMatchResult = printMatch(pattern);
     if (printMatchResult == ERROR)
     {
