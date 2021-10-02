@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <math.h>
 
 #define SUCCESS 0
 #define FAILURE 1
 
-const long int smallIter = 10000000;
+const long int smallIter = 100000;
 int threadNum;
 pthread_barrier_t barrier;
 pthread_mutex_t mutex;
@@ -27,15 +28,20 @@ void stopExec(int signal)
 
 void *calcSum(void *param)
 {
-    iterData_t *iterData = (iterData_t*) param;
+// crit sec
+    if (param == NULL)
+        pthread_exit(NULL);
+    iterData_t localIterData = *((iterData_t*)param);
+//
     int bigIter = 0;
     while (1)
     {
-        for (long int i = iterData->start + bigIter*smallIter*threadNum; i < iterData->start + (bigIter+1)*smallIter*threadNum; i += threadNum)
+        for (long int i = localIterData.start + bigIter*smallIter*threadNum; i < localIterData.start + (bigIter+1)*smallIter*threadNum; i += threadNum)
         {
-            iterData->sum += 1.0/(i*4.0 + 1.0);
-            iterData->sum -= 1.0/(i*4.0 + 3.0);
+            localIterData.sum += 1.0/(i*4.0 + 1.0);
+            localIterData.sum -= 1.0/(i*4.0 + 3.0);
         }
+
         pthread_barrier_wait(&barrier);
 
         pthread_mutex_lock(&mutex);
@@ -52,7 +58,10 @@ void *calcSum(void *param)
         pthread_mutex_unlock(&mutex);
 
     }
-    pthread_exit(iterData);
+// crit sec
+    ((iterData_t*) param)->sum = localIterData.sum;
+    //
+    pthread_exit(param);
 }
 
 int readInput(int argc, char **argv)
@@ -82,7 +91,8 @@ int main(int argc, char **argv)
 {
 // initializing
     threadNum = readInput(argc, argv);
-    double globSum = 0;
+    double totalSum = 0;
+
     int code = pthread_barrier_init(&barrier, NULL, threadNum);
     if (code != SUCCESS)
     {
@@ -136,9 +146,10 @@ int main(int argc, char **argv)
             freeRes(threads, threadsIterData);
             pthread_exit(NULL);
         }
-        globSum += partSum->sum;
+        totalSum += partSum->sum;
     }
-    printf("\npi = %.16f\n", 4*globSum);
+    printf("\npi      = %.16f\n", 4*totalSum);
+    printf("real pi = %.16f\n", M_PI);
 
     freeRes(threads, threadsIterData);
     pthread_exit(SUCCESS);
